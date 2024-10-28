@@ -35,7 +35,7 @@ app.post('/start-messages', (req, res) => {
     const interval = setInterval(() => {
         const payload = JSON.stringify({
             title: 'Message Notification',
-            message: `Hello ${username}, this is your notification!`,
+            message: `Hello ${username}, Don't Miss to Visit The Website!`,
         });
 
         subscriptions.forEach((subscription) => {

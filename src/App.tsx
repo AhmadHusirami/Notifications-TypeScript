@@ -1,16 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, TextField, Button, AppBar, Toolbar, Typography, IconButton, ThemeProvider, createTheme } from '@mui/material';
-import Nightlight from '@mui/icons-material/Nightlight'; // Moon icon
-import WbSunny from '@mui/icons-material/WbSunny'; // Sun icon
+import { Container, TextField, Button, IconButton, ThemeProvider, createTheme, Box, CssBaseline } from '@mui/material';
+import Nightlight from '@mui/icons-material/Nightlight';
+import WbSunny from '@mui/icons-material/WbSunny';
+import toast, { Toaster } from 'react-hot-toast'; // Correct import for toast and Toaster
 
 const App: React.FC = () => {
   const [username, setUsername] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
-  // Toggle between light and dark modes
+  // Load dark mode preference from localStorage on initial load
+  useEffect(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode) {
+      setDarkMode(savedMode === 'true');
+    }
+  }, []);
+
+  // Toggle between light and dark modes and save to localStorage
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', newMode.toString());
   };
 
   // Create Material-UI theme based on the dark mode state
@@ -18,17 +29,19 @@ const App: React.FC = () => {
     palette: {
       mode: darkMode ? 'dark' : 'light',
       background: {
-        default: darkMode ? '#000000' : '#ffffff', // Black background in dark mode
-        paper: darkMode ? '#000000' : '#ffffff', // Keep paper background the same as default
+        default: darkMode ? '#000000' : '#ffffff',
+        paper: darkMode ? '#000000' : '#ffffff',
       },
       text: {
-        primary: darkMode ? '#ffffff' : '#000000', // White text in dark mode and black text in light mode
+        primary: darkMode ? '#ffffff' : '#000000',
       },
+    },
+    typography: {
+      fontFamily: '"Oxanium", sans-serif',
     },
   });
 
   useEffect(() => {
-    // Register the service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
@@ -69,40 +82,103 @@ const App: React.FC = () => {
     if (username) {
       try {
         const response = await axios.post('http://localhost:5000/start-messages', { username });
-        alert(response.data.message); // Use response data from the server
+        toast.success(response.data.message); // Use react-hot-toast for success messages
+        setUsername(''); // Clear the input field after success
       } catch (error) {
         console.error('Error starting messages:', error);
-        alert('Failed to start messages. Please check the console for more details.');
+        toast.error('Failed to start messages. Please check the console for more details.', {
+          duration: 5000, // Display for 5 seconds
+          icon: '❌', // Optional: Add an icon
+          position: 'top-center', // Optional: Position of the toast
+        });
       }
     }
   };
 
   return (
     <ThemeProvider theme={theme}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Message Notification App
-          </Typography>
-          <IconButton color="inherit" onClick={toggleDarkMode}>
-            {darkMode ? <WbSunny /> : <Nightlight />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="sm" sx={{ textAlign: 'center', marginTop: 5, bgcolor: 'background.default', padding: 3, borderRadius: 2 }}>
-        <TextField
-          variant="outlined"
-          label="Enter your name"
-          fullWidth
-          margin="normal"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          sx={{ input: { color: darkMode ? '#ffffff' : '#000000' }, bgcolor: darkMode ? '#424242' : '#ffffff' }} // Set input color and background
-        />
-        <Button variant="contained" onClick={handleStart} fullWidth sx={{ bgcolor: darkMode ? '#ffffff' : '#000000', color: darkMode ? '#000000' : '#ffffff' }}>
-          Start Messages
-        </Button>
-      </Container>
+      <CssBaseline />
+      <Toaster /> {/* Include the Toaster */}
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        width="100vw"
+        height="100vh"
+        bgcolor="background.default"
+        overflow="hidden"
+      >
+        <IconButton
+          onClick={toggleDarkMode}
+          disableRipple // Disable the ripple effect
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 'calc(50% - 280px)',
+            color: darkMode ? '#ffffff' : 'inherit',
+            bgcolor: 'transparent', // Ensure the background is transparent
+            '&:hover': {
+              bgcolor: 'transparent', // Remove hover background color
+            },
+            '&:active': {
+              bgcolor: 'transparent', // Remove active background color
+            },
+          }}
+        >
+          {darkMode ? <WbSunny /> : <Nightlight />}
+        </IconButton>
+        <Container
+          maxWidth="sm"
+          sx={{
+            textAlign: 'center',
+            mt: 8,
+            bgcolor: 'background.default',
+            p: 3,
+            borderRadius: 2,
+          }}
+        >
+          <TextField
+            variant="outlined"
+            label="Enter your name"
+            fullWidth
+            margin="normal"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            sx={{
+              input: { color: darkMode ? '#ffffff' : '#000000' },
+              bgcolor: darkMode ? '#424242' : '#ffffff',
+              '& label': {
+                color: darkMode ? '#ffffff' : '#000000',
+              },
+              '& label.Mui-focused': {
+                color: darkMode ? '#ffffff' : '#000000',
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: darkMode ? '#ffffff' : '#000000',
+                },
+                '&:hover fieldset': {
+                  borderColor: darkMode ? '#ffffff' : '#000000',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: darkMode ? '#ffffff' : '#000000',
+                },
+              },
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleStart}
+            fullWidth
+            sx={{
+              bgcolor: darkMode ? '#ffffff' : '#000000',
+              color: darkMode ? '#000000' : '#ffffff',
+            }}
+          >
+            Start Messages
+          </Button>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 };
